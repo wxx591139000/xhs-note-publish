@@ -1,0 +1,23 @@
+@echo off
+chcp 65001 >nul
+title 小红书笔记发布工具 (服务 + 隧道)
+cd /d "%~dp0"
+
+echo ============================================
+echo   小红书笔记发布工具  一键启动
+echo   电脑端管理: https://xhs.zhuanlu.xyz/app
+echo   手机端访问: https://xhs.zhuanlu.xyz/m
+echo   默认密码:   888888
+echo ============================================
+echo.
+
+rem 1. 启动工具服务 (新窗口)
+start "XHS-Server" cmd /k "cd /d %~dp0 && python app.py"
+
+rem 2. 启动 cloudflare 隧道 (新窗口)
+start "XHS-Tunnel" cmd /k "cloudflared tunnel run transcribe-bot"
+
+echo 已启动两个窗口：XHS-Server 和 XHS-Tunnel。
+echo 关闭它们即停止服务。本窗口可关闭。
+echo.
+pause

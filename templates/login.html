@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小红书笔记发布工具 · 登录</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-body">
+  <div class="login-card">
+    <div class="login-logo">📔</div>
+    <h1>小红书笔记发布工具</h1>
+    <p class="login-sub">AI 融入日常工作 · 电脑管素材，手机发笔记</p>
+    <form method="POST" action="/login?next={{ next }}">
+      <input type="password" name="password" placeholder="请输入访问密码" autofocus required>
+      <button type="submit" class="btn btn-primary btn-block">进入</button>
+    </form>
+    {% if error %}<p class="login-error">{{ error }}</p>{% endif %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# 运行时数据（app.py 启动时自动创建）
+data/
+data/*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 日志
+*.log
+
+# 系统
+.DS_Store
+Thumbs.db

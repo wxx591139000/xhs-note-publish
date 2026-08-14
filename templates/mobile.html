@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>小红书笔记发布</title>
+<link rel="stylesheet" href="/static/style.css?v=20260814-4">
+</head>
+<body class="mobile-body">
+<header class="m-topbar">
+  <div class="m-brand">📔 笔记发布队列</div>
+  <div class="m-filters">
+    <button class="chip active" data-filter="pending">待发布</button>
+    <button class="chip" data-filter="drafted">草稿</button>
+    <button class="chip" data-filter="published">已发布</button>
+  </div>
+</header>
+
+<div id="mList" class="m-list"></div>
+<div class="m-hint" id="mHint">💡 标题「复制标题」→ 正文「复制文案」→ 图「下载图」存相册 → 小红书粘贴、选图发布。</div>
+<div class="m-empty" id="mEmpty" style="display:none">暂无笔记，去电脑端添加素材吧 🎈</div>
+
+<!-- 图片放大层 -->
+<div class="m-lightbox" id="mLightbox" onclick="closeLightbox()">
+  <img id="mLightboxImg" src="" alt="大图">
+  <div class="m-lightbox-hint">长按图片可保存到相册</div>
+</div>
+
+<!-- 逐张保存弹层 -->
+<div class="m-lightbox" id="mSaveModal">
+  <img id="mSaveImg" src="" alt="待保存图片">
+  <div class="m-save-info" id="mSaveInfo">第 1/3 张</div>
+  <div class="m-save-actions">
+    <button class="btn btn-primary btn-block" id="mSaveBtn">保存此图</button>
+  </div>
+</div>
+
+<script src="/static/mobile.js?v=20260814-4"></script>
+</body>
+</html>

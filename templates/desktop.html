@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小红书笔记发布工具 · 电脑端管理</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">📔 小红书笔记发布工具</div>
+    <div class="topbar-actions">
+      <a class="btn btn-ghost" href="/m" target="_blank">📱 手机端</a>
+      <button class="btn btn-ghost" id="btnQr">🔳 二维码</button>
+      <button class="btn btn-ghost" id="btnAuto">🤖 自动化</button>
+      <button class="btn btn-ghost" id="btnPwd">🔑 改密码</button>
+      <a class="btn btn-ghost" href="/logout">退出</a>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- 左侧：编辑区 -->
+  <section class="panel editor-panel">
+    <h2 id="editorTitle">新建笔记</h2>
+    <input type="hidden" id="noteId" value="">
+    <label>标题</label>
+    <input type="text" id="fTitle" placeholder="标题（建议 20 字内，吸引眼球）" maxlength="60">
+    <label>正文</label>
+    <textarea id="fBody" rows="8" placeholder="正文内容…"></textarea>
+    <label>标签（逗号分隔，会自动加 #）</label>
+    <input type="text" id="fTags" placeholder="如：AI工具,效率,干货">
+    <label>封面图</label>
+    <div class="img-drop" id="dropCover">
+      <input type="file" id="coverFile" accept="image/*" multiple hidden>
+      <div class="cover-thumb" id="coverThumb"></div>
+      <div class="drop-hint">点击/拖拽上传封面</div>
+    </div>
+    <label>配图（可多张）</label>
+    <div class="img-drop" id="dropImages">
+      <input type="file" id="imagesFile" accept="image/*" multiple hidden>
+      <div class="image-grid" id="imageGrid"></div>
+      <div class="drop-hint">点击/拖拽上传配图（可多选）</div>
+    </div>
+    <div class="editor-actions">
+      <button class="btn btn-primary" id="btnSave">保存</button>
+      <button class="btn btn-ghost" id="btnReset">清空</button>
+    </div>
+    <div class="preview-block">
+      <h3>预览</h3>
+      <div class="preview-card">
+        <div class="preview-cover" id="previewCover"></div>
+        <div class="preview-title" id="previewTitle">笔记标题</div>
+        <div class="preview-body" id="previewBody">正文预览…</div>
+        <div class="preview-tags" id="previewTags"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 右侧：列表区 -->
+  <section class="panel list-panel">
+    <div class="list-head">
+      <h2>笔记队列</h2>
+      <div class="list-filters">
+        <button class="chip active" data-filter="all">全部</button>
+        <button class="chip" data-filter="pending">待发布</button>
+        <button class="chip" data-filter="drafted">草稿</button>
+        <button class="chip" data-filter="published">已发布</button>
+      </div>
+    </div>
+    <div id="noteList" class="note-list"></div>
+  </section>
+</main>
+
+<!-- 二维码弹窗 -->
+<div class="modal" id="qrModal">
+  <div class="modal-card">
+    <h3>手机扫码发布</h3>
+    <img id="qrImg" alt="二维码" style="width:220px;height:220px;">
+    <p class="muted" id="qrUrl"></p>
+    <p class="muted">手机打开后可预览笔记、一键复制、标记已发布</p>
+    <button class="btn btn-primary btn-block" id="btnCloseQr">关闭</button>
+  </div>
+</div>
+
+<!-- 自动化弹窗 -->
+<div class="modal" id="autoModal">
+  <div class="modal-card" style="text-align:left;width:min(92vw,520px)">
+    <h3 style="text-align:center">🤖 自动填充（存草稿）</h3>
+    <p class="muted" style="margin-top:0">把「待发布」笔记自动填进小红书编辑器并<strong>存草稿</strong>，你人工审核后再发布。需安卓机 + AutoX.js。</p>
+    <label>自动化 Token（手机端脚本拉取笔记用）</label>
+    <div class="token-row">
+      <input type="text" id="autoToken" readonly onclick="this.select()">
+      <button class="btn btn-sm" id="btnCopyToken">复制</button>
+    </div>
+    <label>脚本地址（手机浏览器打开后保存为 .js）</label>
+    <div class="token-row">
+      <input type="text" id="autoScriptUrl" readonly onclick="this.select()">
+      <button class="btn btn-sm" id="btnCopyScript">复制</button>
+    </div>
+    <p class="muted">装 AutoX.js → 把脚本存到手机 → 打开「我的笔记」→ 把 token 填进脚本顶部 CONFIG.TOKEN → 运行。</p>
+    <div class="editor-actions" style="justify-content:center">
+      <button class="btn btn-danger" id="btnRegenToken">重新生成 Token</button>
+      <button class="btn btn-ghost" id="btnCloseAuto">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 改密码弹窗 -->
+<div class="modal" id="pwdModal">
+  <div class="modal-card">
+    <h3>修改访问密码</h3>
+    <label>新密码</label>
+    <input type="password" id="pNew" placeholder="至少 4 位">
+    <label>确认新密码</label>
+    <input type="password" id="pNew2" placeholder="再次输入">
+    <div class="editor-actions">
+      <button class="btn btn-primary" id="btnPwdSave">保存</button>
+      <button class="btn btn-ghost" id="btnClosePwd">取消</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
