@@ -1,8 +1,13 @@
 # 小红书笔记发布工具 · 项目踩坑记录
 
-> 版本：v1.1.1（2026-08-14 归档 v3）
+> 版本：v1.1.2（2026-08-18 归档）
 
 ## 踩坑清单
+
+### [2026-08-18] start.bat 用旧 transcribe-bot 隧道会抢 VPS 隧道
+- **问题**：`start.bat` 隧道命令写的是 `cloudflared tunnel run transcribe-bot`，一旦双击会抢 VPS 转录 bot 的隧道，导致 `upload.zhuanlu.xyz` 等域名 502
+- **原因**：双隧道拆分后（`COORDINATION.md`）本地小红书应走 `xhs-tunnel`(27da88b4)，但 start.bat 没跟着改
+- **解决/规避**：改为 `cd /d C:\Users\Dancing\.cloudflared && cloudflared tunnel run xhs-tunnel`（必须 cd 到 .cloudflared 目录，cloudflared 才自动加载 config.yml）
 
 ### [2026-08-14] Windows curl 中文 JSON 返回 400
 - **问题**：用 curl `-d '{"title":"中文"}'` 创建笔记报 400 Bad Request

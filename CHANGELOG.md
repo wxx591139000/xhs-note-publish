@@ -1,5 +1,12 @@
 # 更新日志
 
+## [v1.1.2] - 2026-08-18 - 隧道配置修正
+
+### 修复
+- `start.bat` 的隧道命令从旧的 `transcribe-bot` 改为正确的 `xhs-tunnel`（`27da88b4`），并 `cd` 到 `~/.cloudflared` 加载 config
+- **原隐患**：用 `transcribe-bot` 隧道会抢 VPS 转录 bot 的隧道，导致 `upload.zhuanlu.xyz` 等域名 502
+- 对齐 `COORDINATION.md` 双隧道约定：本地小红书只走 `xhs-tunnel`，与 VPS 的 `transcribe-bot` 彻底隔离
+
 ## [v1.1.1] - 2026-08-14 - 复制标题
 
 ### 新增
