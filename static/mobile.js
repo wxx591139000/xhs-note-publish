@@ -71,7 +71,8 @@ async function copyItem(id) {
   const n = allNotes.find(x => x.id === id);
   if (!n) return;
   const meta = n.meta || {};
-  const entries = Object.entries(meta).filter(([k, v]) => k && v);
+  // purpose 是内部用途标记(小红书/闲鱼/通用，用于标签页筛选)，非闲鱼宝贝字段，复制时排除
+  const entries = Object.entries(meta).filter(([k, v]) => k && v && k !== 'purpose');
   const parts = [];
   if (n.title) parts.push(n.title);
   if (n.body) parts.push(n.body);

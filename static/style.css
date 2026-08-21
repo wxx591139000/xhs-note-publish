@@ -94,8 +94,9 @@ a { color: inherit; text-decoration: none; }
 .preview-tags span { color: var(--red); font-size: 13px; margin-right: 8px; }
 
 /* ---------- 列表 ---------- */
-.list-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.list-filters { display: flex; gap: 6px; }
+.list-head { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.list-head h2 { align-self: flex-start; }
+.list-filters { display: flex; gap: 6px; flex-wrap: wrap; }
 .chip {
   padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--card);
   font-size: 13px; cursor: pointer; color: var(--muted);

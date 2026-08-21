@@ -1,6 +1,7 @@
 // 桌面端管理逻辑
 let allNotes = [];
 let currentFilter = 'all';
+let currentPurposeFilter = 'all';   // all / xhs / idlefish / common
 let coverFiles = [];
 let imageFiles = [];   // 文件名数组
 let currentId = null;
@@ -18,11 +19,18 @@ async function loadNotes() {
   renderList();
 }
 
+function purposeOf(n) {
+  return (n.meta && n.meta.purpose) || 'common';
+}
+
 function filteredNotes() {
-  if (currentFilter === 'pending') return allNotes.filter(n => n.status === 'pending');
-  if (currentFilter === 'drafted') return allNotes.filter(n => n.status === 'drafted');
-  if (currentFilter === 'published') return allNotes.filter(n => n.status === 'published');
-  return allNotes;
+  let notes = allNotes;
+  if (currentFilter === 'pending') notes = notes.filter(n => n.status === 'pending');
+  else if (currentFilter === 'drafted') notes = notes.filter(n => n.status === 'drafted');
+  else if (currentFilter === 'published') notes = notes.filter(n => n.status === 'published');
+  // 用途/平台筛选：all=所有分类都显示
+  if (currentPurposeFilter !== 'all') notes = notes.filter(n => purposeOf(n) === currentPurposeFilter);
+  return notes;
 }
 
 function renderList() {
@@ -274,11 +282,21 @@ $('#btnSave').addEventListener('click', saveNote);
 $('#btnReset').addEventListener('click', resetEditor);
 
 // ---------- 筛选 ----------
-document.querySelectorAll('.list-filters .chip').forEach(chip => {
+document.querySelectorAll('.list-filters .chip[data-filter]').forEach(chip => {
   chip.addEventListener('click', () => {
-    document.querySelectorAll('.list-filters .chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.list-filters .chip[data-filter]').forEach(c => c.classList.remove('active'));
     chip.classList.add('active');
     currentFilter = chip.dataset.filter;
+    renderList();
+  });
+});
+
+// 用途/平台筛选
+document.querySelectorAll('.list-filters .chip[data-pfilter]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.list-filters .chip[data-pfilter]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentPurposeFilter = chip.dataset.pfilter;
     renderList();
   });
 });
