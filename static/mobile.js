@@ -1,6 +1,7 @@
 // 手机端发布逻辑
 let allNotes = [];
 let currentFilter = 'pending';
+let currentPlat = 'all';   // all / xhs / idlefish / common
 const $ = (s) => document.querySelector(s);
 
 async function loadNotes() {
@@ -11,11 +12,15 @@ async function loadNotes() {
   render();
 }
 
+function purposeOf(n) { return (n.meta && n.meta.purpose) || 'common'; }
+
 function filtered() {
-  if (currentFilter === 'pending') return allNotes.filter(n => n.status === 'pending');
-  if (currentFilter === 'drafted') return allNotes.filter(n => n.status === 'drafted');
-  if (currentFilter === 'published') return allNotes.filter(n => n.status === 'published');
-  return allNotes;
+  let arr = allNotes;
+  if (currentFilter === 'pending') arr = arr.filter(n => n.status === 'pending');
+  if (currentFilter === 'drafted') arr = arr.filter(n => n.status === 'drafted');
+  if (currentFilter === 'published') arr = arr.filter(n => n.status === 'published');
+  if (currentPlat !== 'all') arr = arr.filter(n => purposeOf(n) === currentPlat);
+  return arr;
 }
 
 function esc(s) {
@@ -31,20 +36,27 @@ function render() {
     const cover = n.images[0];
     const gallery = n.images.slice(1).map((f, gi) => `<img src="/uploads/${f}" loading="lazy" onclick="openImg(${n.id}, ${gi + 1})">`).join('');
     const tags = (n.tags_list || []).map(t => `<span>#${esc(t)}</span>`).join('');
+    const plat = purposeOf(n);
+    const platBadge = plat === 'idlefish' ? '<span class="m-status-pending plat-fish">🐟 闲鱼</span>'
+      : plat === 'xhs' ? '<span class="m-status-pending plat-xhs">📕 小红书</span>' : '';
+    const showItem = plat === 'idlefish' || plat === 'common';
+    const showNote = plat === 'xhs' || plat === 'common';
     return `
     <div class="m-card">
       ${cover ? `<div class="m-cover" style="background-image:url('/uploads/${cover}')" onclick="openImg(${n.id}, 0)"></div>` : ''}
       <div class="m-body">
         <div class="m-title">${esc(n.title) || '(无标题)'}
           ${n.status !== 'published' ? `<span class="m-status-${n.status}">${n.status === 'drafted' ? '草稿' : '待发布'}</span>` : ''}
+          ${platBadge}
         </div>
         <div class="m-text">${esc(n.body)}</div>
         ${tags ? `<div class="m-tags">${tags}</div>` : ''}
       </div>
       ${gallery ? `<div class="m-gallery">${gallery}</div>` : ''}
       <div class="m-actions">
-        <button class="btn btn-primary" onclick="copyNote(${n.id})">📋 复制文案</button>
-        <button class="btn btn-ghost" onclick="copyTitle(${n.id})">✏️ 复制标题</button>
+        ${showItem ? `<button class="btn btn-primary" onclick="copyItem(${n.id})">🐟 复制宝贝文案</button>` : ''}
+        ${showNote ? `<button class="btn btn-ghost" onclick="copyNote(${n.id})">📋 复制文案</button>` : ''}
+        ${showNote ? `<button class="btn btn-ghost" onclick="copyTitle(${n.id})">✏️ 复制标题</button>` : ''}
         ${n.images.length ? `<button class="btn btn-ghost" onclick="downloadImages(${n.id})">📥 下载图(${n.images.length})</button>` : ''}
         ${n.status === 'published'
           ? `<button class="btn btn-ghost" onclick="revert(${n.id})">↩ 撤回</button>`
@@ -52,6 +64,37 @@ function render() {
       </div>
     </div>`;
   }).join('');
+}
+
+// 一键复制闲鱼宝贝文案：标题 + 正文 + 每行「宝贝字段:值」(meta)，供闲鱼"发布宝贝"粘贴
+async function copyItem(id) {
+  const n = allNotes.find(x => x.id === id);
+  if (!n) return;
+  const meta = n.meta || {};
+  const entries = Object.entries(meta).filter(([k, v]) => k && v);
+  const parts = [];
+  if (n.title) parts.push(n.title);
+  if (n.body) parts.push(n.body);
+  entries.forEach(([k, v]) => parts.push(`${k}：${v}`));
+  const text = parts.join('\n');
+
+  let ok = false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    }
+  } catch (e) {}
+  if (!ok) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  toast(ok ? '宝贝文案已复制，去闲鱼「发布宝贝」粘贴 🐟' : '复制失败，请长按手动复制');
 }
 
 // 一键复制：标题 + 正文 + 标签
@@ -120,11 +163,21 @@ async function revert(id) {
   toast('已撤回待发布');
 }
 
-document.querySelectorAll('.m-filters .chip').forEach(chip => {
+document.querySelectorAll('#mStatusFilters .chip').forEach(chip => {
   chip.addEventListener('click', () => {
-    document.querySelectorAll('.m-filters .chip').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('#mStatusFilters .chip').forEach(c => c.classList.remove('active'));
     chip.classList.add('active');
     currentFilter = chip.dataset.filter;
+    render();
+  });
+});
+
+// 平台筛选（小红书 / 闲鱼 / 通用）
+document.querySelectorAll('#mPlatFilters .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#mPlatFilters .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentPlat = chip.dataset.plat;
     render();
   });
 });

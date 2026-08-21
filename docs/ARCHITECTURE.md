@@ -1,6 +1,6 @@
 # 小红书笔记发布工具 · 项目详细方案
 
-> 版本：v1.1.2（2026-08-18 归档）
+> 版本：v1.2.0（2026-08-21 归档）
 
 ## 系统架构图（文字）
 
@@ -38,7 +38,8 @@
 ### 笔记主链路
 ```
 桌面/手机 → /api/notes → SQLite notes 表
-  每条笔记: title/body/tags/cover/images(JSON)/status/position/时间戳
+  每条笔记: title/body/tags/cover/images(JSON)
+         /meta(JSON: 宝贝字段 dict + purpose 用途标记)/status/position/时间戳
 ```
 
 ### 状态机

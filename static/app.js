@@ -4,6 +4,7 @@ let currentFilter = 'all';
 let coverFiles = [];
 let imageFiles = [];   // 文件名数组
 let currentId = null;
+let currentPurpose = 'common';   // xhs / idlefish / common
 
 const $ = (s) => document.querySelector(s);
 const STATUS_LABEL = { pending: '待发布', drafted: '草稿', published: '已发布' };
@@ -37,6 +38,7 @@ function renderList() {
       <div class="note-info">
         <div class="note-title">${esc(n.title) || '(无标题)'}
           <span class="note-badge badge-${n.status}">${STATUS_LABEL[n.status] || n.status}</span>
+          ${purposeBadge(n)}
         </div>
         <div class="note-meta">${n.images.length} 图 · ${(n.body || '').length} 字 · ${tagsText(n.tags_list)}</div>
       </div>
@@ -64,6 +66,46 @@ function tagsText(tags) {
   return tags.map(t => '#' + t).join(' ');
 }
 
+// ---------- 闲鱼宝贝信息(meta)：文本 ↔ 对象 ----------
+// 文本格式：每行「键:值」，如 "价格:128\n成色:9成新"
+function metaToText(meta) {
+  meta = meta || {};
+  return Object.entries(meta).map(([k, v]) => `${k}:${v}`).join('\n');
+}
+function textToMeta(text) {
+  const m = {};
+  (text || '').split('\n').forEach(line => {
+    const i = line.indexOf(':');
+    if (i > 0) {
+      const k = line.slice(0, i).trim();
+      const v = line.slice(i + 1).trim();
+      if (k) m[k] = v;
+    }
+  });
+  return m;
+}
+
+// 用途徽标文案
+function purposeBadge(n) {
+  const p = (n.meta && n.meta.purpose) || 'common';
+  if (p === 'idlefish') return '<span class="note-badge badge-idlefish">🐟 闲鱼</span>';
+  if (p === 'xhs') return '<span class="note-badge badge-xhs">📕 小红书</span>';
+  return '';
+}
+
+// 用途选择器 UI 同步
+function syncPurposeUI() {
+  document.querySelectorAll('#purposeRow .chip').forEach(c =>
+    c.classList.toggle('active', c.dataset.purpose === currentPurpose));
+}
+// 用途选择器事件
+document.querySelectorAll('#purposeRow .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    currentPurpose = chip.dataset.purpose;
+    syncPurposeUI();
+  });
+});
+
 // ---------- 编辑 ----------
 function editNote(id) {
   const n = allNotes.find(x => x.id === id);
@@ -74,6 +116,9 @@ function editNote(id) {
   $('#fTitle').value = n.title;
   $('#fBody').value = n.body;
   $('#fTags').value = n.tags;
+  $('#fMeta').value = metaToText(n.meta);
+  currentPurpose = (n.meta && n.meta.purpose) || 'common';
+  syncPurposeUI();
   imageFiles = n.images.slice();
   renderImages();
   updatePreview();
@@ -86,6 +131,9 @@ function resetEditor() {
   $('#fTitle').value = '';
   $('#fBody').value = '';
   $('#fTags').value = '';
+  $('#fMeta').value = '';
+  currentPurpose = 'common';
+  syncPurposeUI();
   coverFiles = [];
   imageFiles = [];
   renderImages();
@@ -101,6 +149,9 @@ function openPreview(id) {
   $('#fTitle').value = n.title;
   $('#fBody').value = n.body;
   $('#fTags').value = n.tags;
+  $('#fMeta').value = metaToText(n.meta);
+  currentPurpose = (n.meta && n.meta.purpose) || 'common';
+  syncPurposeUI();
   imageFiles = n.images.slice();
   renderImages();
   updatePreview();
@@ -191,6 +242,7 @@ async function saveNote() {
     tags: $('#fTags').value.trim(),
     images: imageFiles,
     cover: imageFiles[0] || '',
+    meta: Object.assign(textToMeta($('#fMeta').value), { purpose: currentPurpose }),
   };
   if (!payload.title && !payload.body && !imageFiles.length) {
     alert('请至少填写标题或上传一张图'); return;

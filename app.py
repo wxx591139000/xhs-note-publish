@@ -65,6 +65,7 @@ def init_db():
             tags       TEXT NOT NULL DEFAULT '',      -- 逗号分隔，如 "AI工具,效率,干货"
             cover      TEXT NOT NULL DEFAULT '',       -- images 数组中作为封面的文件名
             images     TEXT NOT NULL DEFAULT '[]',     -- JSON 数组，文件名列表
+            meta       TEXT NOT NULL DEFAULT '{}',     -- JSON dict，闲鱼宝贝字段(价格/成色/发货地等)
             status     TEXT NOT NULL DEFAULT 'pending',-- pending / published
             position   INTEGER NOT NULL DEFAULT 0,      -- 排序序号
             created_at INTEGER NOT NULL,
@@ -72,6 +73,10 @@ def init_db():
         );
         """
     )
+    # 迁移：旧库 notes 表补 meta 列（闲鱼宝贝字段），新库已在 CREATE 里带上
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(notes)").fetchall()]
+    if "meta" not in cols:
+        conn.execute("ALTER TABLE notes ADD COLUMN meta TEXT NOT NULL DEFAULT '{}'")
     # 默认密码
     conn.execute(
         "INSERT OR IGNORE INTO settings(key, value) VALUES('password', ?)",
@@ -116,6 +121,12 @@ def ensure_auto_token():
 def note_to_dict(row):
     d = dict(row)
     d["images"] = json.loads(d["images"] or "[]")
+    try:
+        d["meta"] = json.loads(d.get("meta") or "{}")
+    except Exception:
+        d["meta"] = {}
+    # 用途标记：xhs(小红书) / idlefish(闲鱼) / common(通用，含历史未标记笔记)
+    d["meta"].setdefault("purpose", "common")
     d["tags_list"] = [t.strip() for t in (d["tags"] or "").split(",") if t.strip()]
     return d
 
@@ -198,14 +209,15 @@ def create_note():
     now = int(time.time())
     conn = get_db()
     cur = conn.execute(
-        """INSERT INTO notes(title, body, tags, cover, images, status, position, created_at, updated_at)
-           VALUES(?,?,?,?,?, 'pending', ?, ?, ?)""",
+        """INSERT INTO notes(title, body, tags, cover, images, meta, status, position, created_at, updated_at)
+           VALUES(?,?,?,?,?,?, 'pending', ?, ?, ?)""",
         (
             (data.get("title") or "").strip(),
             data.get("body") or "",
             (data.get("tags") or "").strip(),
             data.get("cover") or "",
             json.dumps(data.get("images") or [], ensure_ascii=False),
+            json.dumps(data.get("meta") or {}, ensure_ascii=False),
             next_position(),
             now, now,
         ),
@@ -228,7 +240,7 @@ def update_note(nid):
         conn.close()
         return jsonify({"error": "not found"}), 404
     conn.execute(
-        """UPDATE notes SET title=?, body=?, tags=?, cover=?, images=?, updated_at=?
+        """UPDATE notes SET title=?, body=?, tags=?, cover=?, images=?, meta=?, updated_at=?
            WHERE id=?""",
         (
             (data.get("title") or "").strip(),
@@ -236,6 +248,7 @@ def update_note(nid):
             (data.get("tags") or "").strip(),
             data.get("cover") or "",
             json.dumps(data.get("images") or [], ensure_ascii=False),
+            json.dumps(data.get("meta") or {}, ensure_ascii=False),
             now, nid,
         ),
     )

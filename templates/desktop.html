@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>小红书笔记发布工具 · 电脑端管理</title>
-<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/style.css?v=20260821-2">
 </head>
 <body>
 <header class="topbar">
@@ -25,12 +25,20 @@
   <section class="panel editor-panel">
     <h2 id="editorTitle">新建笔记</h2>
     <input type="hidden" id="noteId" value="">
+    <label>用途（手机端按此显示对应发布按钮）</label>
+    <div class="purpose-row" id="purposeRow">
+      <button type="button" class="chip" data-purpose="xhs">📕 小红书</button>
+      <button type="button" class="chip" data-purpose="idlefish">🐟 闲鱼</button>
+      <button type="button" class="chip active" data-purpose="common">🔀 通用</button>
+    </div>
     <label>标题</label>
     <input type="text" id="fTitle" placeholder="标题（建议 20 字内，吸引眼球）" maxlength="60">
     <label>正文</label>
     <textarea id="fBody" rows="8" placeholder="正文内容…"></textarea>
     <label>标签（逗号分隔，会自动加 #）</label>
     <input type="text" id="fTags" placeholder="如：AI工具,效率,干货">
+    <label>闲鱼宝贝信息（可选项，每行「键:值」，发小红书写笔记时无用）</label>
+    <textarea id="fMeta" rows="4" placeholder="价格:128&#10;成色:9成新&#10;发货地:广州&#10;运费:包邮"></textarea>
     <label>封面图</label>
     <div class="img-drop" id="dropCover">
       <input type="file" id="coverFile" accept="image/*" multiple hidden>
@@ -122,6 +130,6 @@
   </div>
 </div>
 
-<script src="/static/app.js"></script>
+<script src="/static/app.js?v=20260821-2"></script>
 </body>
 </html>

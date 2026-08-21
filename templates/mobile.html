@@ -4,15 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>小红书笔记发布</title>
-<link rel="stylesheet" href="/static/style.css?v=20260814-4">
+<link rel="stylesheet" href="/static/style.css?v=20260821-2">
 </head>
 <body class="mobile-body">
 <header class="m-topbar">
   <div class="m-brand">📔 笔记发布队列</div>
-  <div class="m-filters">
+  <div class="m-filters" id="mStatusFilters">
     <button class="chip active" data-filter="pending">待发布</button>
     <button class="chip" data-filter="drafted">草稿</button>
     <button class="chip" data-filter="published">已发布</button>
+  </div>
+  <div class="m-filters m-filters-plat" id="mPlatFilters">
+    <button class="chip active" data-plat="all">全部</button>
+    <button class="chip" data-plat="xhs">📕 小红书</button>
+    <button class="chip" data-plat="idlefish">🐟 闲鱼</button>
+    <button class="chip" data-plat="common">🔀 通用</button>
   </div>
 </header>
 
@@ -35,6 +41,6 @@
   </div>
 </div>
 
-<script src="/static/mobile.js?v=20260814-4"></script>
+<script src="/static/mobile.js?v=20260821-2"></script>
 </body>
 </html>
