@@ -1,15 +1,19 @@
 # 小红书笔记发布工具 · 项目测试计划
 
-> 版本：v1.6.0（2026-10-01 归档）
+> 版本：v1.6.1（2026-10-01 二次归档）
 
 ## 测试范围与策略
 
-本项目为 Flask 本地 Web 应用。测试分两层：
+本项目为 Flask 本地 Web 应用。测试分三层：
 
 1. **自动化回归（Node，无服务/无网络）** —— `scripts/` 下的两个脚本，直接**从 `static/*.js` 抽取线上函数体**执行断言（不是重写副本），防止「测试与实现各写一份」漂移：
    - `node scripts/test_queue_sort.js` —— 队列排序，**25 项**（含 **48 组**双端一致性 = 3 排序 × 4 状态 × 4 平台）
    - `node scripts/test_img_slots.js` —— 图位标记，**24 项**（含 **14 组**双端一致性 + `【价格】`/`[01:10]` 负例）
-2. **手工冒烟 + 浏览器 E2E**（curl / Playwright + 系统 Chrome），覆盖认证、CRUD、上传、隧道、预览渲染等链路。
+2. **渲染可视化校验（Node + Playwright + 系统 Chrome，需服务在跑）** —— v1.6.1 新增，**用真实浏览器 + 像素取证**证明"用户真能看见"：
+   - `node tools/verify_preview_render.mjs` —— 渲染 + 网络层判据：清点列表缩略图与预览面板每张图的 `naturalWidth`/`complete`/可见性；统计图片请求 **≥400 条数**，并按「是否含 `/uploads/` 前缀」分流（**这是本次缺陷的直接证据**）。退出码 0=PASS
+   - `node tools/verify_pixel_proof.mjs` —— **像素级判据**：把每张图 `drawImage` 进 48×48 canvas，统计**颜色种类**与**像素指纹**；**对照 `placeholder.png`（颜色种类 = 1，纯色）** ⇒ 真图颜色种类 44~245、指纹去重 31/32 种 ⇒ 证明"每张显示的都是各自不同的真图"（**不依赖人眼看图**）
+3. **手工冒烟 + 浏览器 E2E**（curl / Playwright + 系统 Chrome），覆盖认证、CRUD、上传、隧道、预览渲染等链路。
+
 
 ## 已覆盖的测试（2026-08-14 验证通过）
 
@@ -97,12 +101,28 @@
 - `run.bat` / `start.bat` 解释器挑选逻辑：**静态核对**（先 `py -3.11`，再 `Python311\python.exe`，都无则打印指引 + `exit /b 1`）✅ —— ⚠️ 未在「无 Flask 环境」实机复现
 - 语法：`node --check` app.js/mobile.js/send.js + `py_compile` app.py/import_note.py 全过 ✅
 
+### 桌面列表缩略图渲染（v1.6.1，★ 本次修复的回归）
+- **缺陷**：`static/app.js` 列表缩略图 `src` 漏拼 `/uploads/` 前缀 ⇒ **51/51 张全是灰占位图**（手机端与预览面板均正常，故长期未被发现）
+- **修复前实测**：缩略图 `src` 取值种类 = **1**；浏览器图片请求 **≥400 共 32 个，32/32 均为「缺前缀」**；`/uploads/` 下 404 = **0**
+- **修复后实测**：`src` 种类 **1→33**；真图加载 **0→32**；异常 **0**；图片 404 **32→0**；`verify_preview_render.mjs` → **VERDICT: PASS** ✅
+- **像素判据**：`verify_pixel_proof.mjs` → 对照 `placeholder.png` 颜色种类 = **1**；32 张缩略图颜色种类 **44~245** 且指纹去重 **31/32 种**；两篇目标笔记预览各 5 张配图全部彩色 ⇒ **PIXEL VERDICT: PASS** ✅
+- ⚠️ **判据必须先排除"加载等待不足"**：`loading=lazy`→`eager` + 滚动全程 + `waitForFunction(所有 img.complete)`，仍全占位才可断定是 code bug
+- ⚠️ **`onerror` 兜底会让缺陷伪装成正常**：该 `<img>` 带 `onerror` 换占位图 ⇒ 页面"看着有图"、元素计数也正常 ⇒ 判据必须下沉到**网络状态码 / 像素**
+
+### 仅登录后可见的接口（v1.6.1 复核）
+- `GET /api/notes` 带 session cookie → **200**，返回 **51 条**（含 `password` 字段）✅
+- `GET /api/view/notes/75|76` 带正确 token → **200**；**无 token → 403**（鉴权生效）✅
+- `GET /login` 表单 POST 正确密码 → **302 → /app**，session cookie 建立 ✅
+- ⚠️ **`/login` 是表单页而非 JSON API**（无 `/api/login`）—— 探测时误用 `/api/login` 会得到 **404**，别据此判断"服务异常"
+
 ## 已知测试缺口
 
 - **AutoX.js 真机**：无法在开发环境跑（需安卓+小红书实机），选择器未实机验证，需用户 DRY_RUN + 真机微调
 - **并发**：多用户同时操作未测（单用户工具）
 - **大文件**：超过 10MB 上传限制的边界未测
 - **iOS 手机端**：复制/下载在 iOS 浏览器表现未实测
+- **移动端缩略图**：`mobile.js` 的 `/uploads/` 前缀经**代码核对**全对（4/4 处），但**未做像素级实测**（只对桌面端做了）
+- **静态拼图前缀无机器闸门**：该类缺陷目前靠"人工 grep 逐处核对"，尚未做成静态检查（见 PROGRESS 待办）
 
 ## 建议回归
 
@@ -112,6 +132,13 @@ node scripts/test_queue_sort.js     # 排序 + 双端一致
 node scripts/test_img_slots.js      # 图位标记 + 双端一致
 ```
 
+**每次改动"图片渲染 / 预览 / 队列列表"** → 追加跑（**需服务在跑**，约 20s）：
+```bash
+node tools/verify_preview_render.mjs    # 渲染 + 网络层：图片 404 必须为 0
+node tools/verify_pixel_proof.mjs       # 像素层：缩略图必须为"各自不同的彩色真图"
+```
+
 **每次改动 `app.py`** → 至少跑一遍手工链路：登录 → 建笔记带图 → 发布 → 自动化拉取 → 公网访问。
 
-**每次改动 `templates/*.html`** → 记得**重启服务**再验（Flask 模板内存缓存），否则会误判「没生效」。
+**每次改动 `templates/*.html`** → 记得**重启服务**再验（Flask 模板内存缓存），否则会误判「没生效」；
+**改 `static/*` 则不必重启**（静态文件实时读盘 + `Cache-Control: no-cache` + ETag，实测刷新即生效）。

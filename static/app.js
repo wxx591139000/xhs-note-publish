@@ -75,7 +75,7 @@ function renderList() {
   }
   list.innerHTML = notes.map(n => `
     <div class="note-item ${n.id === currentId ? 'selected' : ''}" data-id="${n.id}">
-      <img class="note-thumb" src="${n.images[0] || '/static/placeholder.png'}" onerror="this.src='/static/placeholder.png'">
+      <img class="note-thumb" src="${n.images[0] ? '/uploads/' + n.images[0] : '/static/placeholder.png'}" onerror="this.src='/static/placeholder.png'">
       <div class="note-info">
         <div class="note-title">${esc(n.title) || '(无标题)'}
           <span class="note-badge badge-${n.status}">${STATUS_LABEL[n.status] || n.status}</span>

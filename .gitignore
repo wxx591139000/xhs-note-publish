@@ -13,3 +13,7 @@ __pycache__/
 # 系统
 .DS_Store
 Thumbs.db
+
+# 本地改动前备份（含被改文件的旧版本，不进库）
+.workbuddy-backup-*/
+.backup*/
