@@ -14,7 +14,7 @@
 - 建笔记接口：`POST /api/notes`（**必须带头 cookie 登录**）
 - 建出来的笔记**默认 status=`pending`（待发布）**，就是你要的"草稿"，无需 token
 - 一个独立项目 = 你自己的批次，无需 token、无需写进工具代码，**纯 HTTP 调用即可**
-- **两种平台都支持**：同一套接口，靠 `meta.purpose` 区分——📕小红书(`xhs`) / 🐟闲鱼(`idlefish`) / 🔀通用(`common`)。闲鱼稿多填宝贝字段（价格/成色/发货地等），手机端会显示对应的复制按钮。
+- **三个平台都支持**：同一套接口，靠 `meta.purpose` 区分——📕小红书(`xhs`) / 🐟闲鱼(`idlefish`) / 📣公众号(`gzh`) / 🔀通用(`common`)。闲鱼稿多填宝贝字段（价格/成色/发货地等）；公众号稿可在 `meta` 填 `digest`（摘要），手机端会显示对应的复制按钮。
 
 ---
 
@@ -52,7 +52,7 @@ cat > body.json <<'EOF'
   "title": "你的推广标题（建议 20 字内）",
   "body": "这里是整段推广文案正文，可多行，含\n换行和话题标签",
   "tags": "AI工具,效率,种草",            /* 逗号分隔，系统会自动加 # */
-  "meta": { "purpose": "xhs" }           /* xhs 小红书 / idlefish 闲鱼 / common 通用 */
+  "meta": { "purpose": "xhs" }           /* xhs 小红书 / idlefish 闲鱼 / gzh 公众号 / common 通用 */
 }
 EOF
 
@@ -81,7 +81,7 @@ curl -s -b cookies.txt http://127.0.0.1:8800/api/notes
 | `tags` | string | 选 | 逗号分隔如 `"A,B,C"`，展示时自动变 `#A #B #C` |
 | `images` | array | 选 | 图片文件名数组（`name`，见第 4 节上传） |
 | `cover` | string | 选 | 封面文件名（一般为 `images[0]`） |
-| `meta` | object | 选 | `{"purpose":"xhs"}`；闲鱼再加宝贝字段 `价格/成色/发货地` 等 `键:值` |
+| `meta` | object | 选 | `{"purpose":"xhs"}`；闲鱼再加宝贝字段 `价格/成色/发货地` 等 `键:值`；公众号可加 `digest`（摘要，约 120 字） |
 | `status` | string | ❌ 忽略 | **服务端强制 `pending`**，传了也不生效 |
 
 校验规则：`title`/`body`/`images` 至少填一项，否则 `400`。
@@ -109,7 +109,10 @@ curl -s -b cookies.txt -X POST http://127.0.0.1:8800/api/notes/<id>/revert
 ```json
 { "purpose": "idlefish", "价格": "128", "成色": "9成新", "发货地": "广州" }
 ```
-用途决定手机端归到哪类、显示哪个复制按钮（小红书 vs 闲鱼）。
+用途决定手机端归到哪类、显示哪个复制按钮（小红书 / 闲鱼 / 公众号）。
+- `xhs` → 复制文案 / 复制标题 / 下载图
+- `idlefish` → 复制宝贝文案（标题+正文+价格等字段，粘到闲鱼「发布宝贝」）/ 发货话术 / 下载图
+- `gzh` → 复制文案（**不追加 #标签**，公众号不用）/ 复制标题 / 复制摘要（`meta.digest`）/ 下载图
 
 ### 4.4 标成 `drafted`（草稿态）——仅当确需严格"草稿状态"
 默认待发布(pending)已足够当草稿。若下游流程要求 `drafted` 状态，需用 **auto-token**：
@@ -144,4 +147,6 @@ curl -s -b cookies.txt -X DELETE http://127.0.0.1:8800/api/notes/<id>
 > 2) 把文案写成 UTF-8 JSON 文件（至少 `title`/`body`；`tags` 逗号分隔自动加 `#`），`curl -s -b ck.txt --data-binary @body.json -H "Content-Type: application/json" http://127.0.0.1:8800/api/notes`；
 > 3) 返回 `201` 即成功，笔记落在**待发布**，`curl -s -b ck.txt http://127.0.0.1:8800/api/notes` 可复核。
 > 
-> **按目标平台选 `meta.purpose`**：发**小红书** → `"purpose":"xhs"`；发**闲鱼** → `"purpose":"idlefish"` 并在 `meta` 再填宝贝字段（如 `价格`/`成色`/`发货地`）；两平台都发同一稿 → `"purpose":"common"`（两个复制按钮都显示）。手机端会自动按这些分类、并按用途显示对应复制按钮。详情见本手册《API使用手册.md》。
+> **按目标平台选 `meta.purpose`**：发**小红书** → `"purpose":"xhs"`；发**闲鱼** → `"purpose":"idlefish"` 并在 `meta` 再填宝贝字段（如 `价格`/`成色`/`发货地`）；发**公众号** → `"purpose":"gzh"` 并在 `meta` 填 `digest`（摘要）；两平台都发同一稿 → `"purpose":"common"`（两个复制按钮都显示）。手机端会自动按这些分类、并按用途显示对应复制按钮。详情见本手册《API使用手册.md》。
+
+> **版本变更（2026-09-29）**：新增 `gzh`（公众号）用途。改动文件 5 个：`templates/desktop.html`、`templates/mobile.html`、`static/app.js`、`static/mobile.js`、`static/style.css`。`app.py` 未改（数据库 `purpose` 本就是自由字符串，无需后端改动）。备份在 `~/.workbuddy/.backup/xhs-note-publish-gzh-20260929/`。

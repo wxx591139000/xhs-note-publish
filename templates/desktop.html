@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>小红书笔记发布工具 · 电脑端管理</title>
-<link rel="stylesheet" href="/static/style.css?v=20260821-3">
+<link rel="stylesheet" href="/static/style.css?v=20260930-3">
 </head>
 <body>
 <header class="topbar">
@@ -29,16 +29,21 @@
     <div class="purpose-row" id="purposeRow">
       <button type="button" class="chip" data-purpose="xhs">📕 小红书</button>
       <button type="button" class="chip" data-purpose="idlefish">🐟 闲鱼</button>
+      <button type="button" class="chip" data-purpose="gzh">📣 公众号</button>
       <button type="button" class="chip active" data-purpose="common">🔀 通用</button>
     </div>
     <label>标题</label>
     <input type="text" id="fTitle" placeholder="标题（建议 20 字内，吸引眼球）" maxlength="60">
-    <label>正文</label>
-    <textarea id="fBody" rows="8" placeholder="正文内容…"></textarea>
+    <label>正文 <span class="label-hint">想在某处插图，就在那一行写 <code>[[图2]]</code>（数字＝下方第几张配图）</span></label>
+    <textarea id="fBody" rows="8" placeholder="正文内容…&#10;&#10;（在需要插图的位置另起一行写 [[图2]]，预览就会把第 2 张配图插在这里）"></textarea>
+    <div class="body-tools">
+      <button type="button" class="chip" id="btnInsertSlot">🖼 插入图位</button>
+      <span class="muted body-tools-hint">图位标记只用于预览排版，复制/发布的文案里不会带上它</span>
+    </div>
     <label>标签（逗号分隔，会自动加 #）</label>
     <input type="text" id="fTags" placeholder="如：AI工具,效率,干货">
-    <label>闲鱼宝贝信息（可选项，每行「键:值」，发小红书写笔记时无用）</label>
-    <textarea id="fMeta" rows="4" placeholder="价格:128&#10;成色:9成新&#10;发货地:广州&#10;运费:包邮"></textarea>
+    <label>宝贝信息 / 摘要（每行「键:值」，发小红书写笔记时无用）</label>
+    <textarea id="fMeta" rows="4" placeholder="价格:128&#10;成色:9成新&#10;发货地:广州&#10;运费:包邮&#10;（公众号可填 digest:摘要文字）"></textarea>
     <label>封面图</label>
     <div class="img-drop" id="dropCover">
       <input type="file" id="coverFile" accept="image/*" multiple hidden>
@@ -80,7 +85,16 @@
         <button class="chip active" data-pfilter="all">所有</button>
         <button class="chip" data-pfilter="xhs">📕 小红书</button>
         <button class="chip" data-pfilter="idlefish">🐟 闲鱼</button>
+        <button class="chip" data-pfilter="gzh">📣 公众号</button>
         <button class="chip" data-pfilter="common">🔀 通用</button>
+      </div>
+      <div class="list-filters sort-filter">
+        <span class="filter-label">排序</span>
+        <div class="sort-row" id="sortRow">
+          <button class="chip" data-sort="newest">🕒 最新在前</button>
+          <button class="chip" data-sort="oldest">🕓 最早在前</button>
+          <button class="chip" data-sort="queue">📋 队列顺序</button>
+        </div>
       </div>
     </div>
     <div id="noteList" class="note-list"></div>
@@ -136,6 +150,6 @@
   </div>
 </div>
 
-<script src="/static/app.js?v=20260821-3"></script>
+<script src="/static/app.js?v=20260930-3"></script>
 </body>
 </html>

@@ -12,7 +12,8 @@ echo ============================================
 echo.
 
 rem 1. 启动工具服务 (新窗口)
-start "XHS-Server" cmd /k "cd /d %~dp0 && python app.py"
+rem 注意：不能用 PATH 里的 `python`（3.13.14 没装 Flask，会闪退），用 py -3.11
+start "XHS-Server" cmd /k "cd /d %~dp0 && py -3.11 app.py"
 
 rem 2. 启动 cloudflare 隧道 xhs-tunnel (新窗口)
 rem 注意: 必须用 xhs-tunnel(27da88b4)，别用旧的 transcribe-bot 隧道(会抢 VPS 隧道导致 502)。

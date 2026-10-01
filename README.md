@@ -1,6 +1,6 @@
 # 小红书笔记发布工具 📔
 
-> 版本：**v1.3.0**（2026-08-21 归档）· 项目状态：**可用**
+> 版本：**v1.6.0**（2026-10-01 归档，tag `archive-20261001`）· 项目状态：**可用**
 >
 > 把 AI 融入日常工作——电脑端管理素材，手机端一键复制发布。
 > 参考：生财有术《把 AI 融入日常工作，随手做出一个小红书笔记发布工具》。
@@ -9,6 +9,9 @@
 ## 它能做什么
 
 - **电脑端**（`/app`）：用统一格式管理笔记素材——标题 / 正文 / 标签 / 封面图 / 多张配图，实时预览排版效果。
+- **队列排序**（v1.4.0，桌面 + 手机）：🕒 最新在前（默认）/ 🕓 最早在前 / 📋 队列顺序，列表项显示编写时间，偏好记 `localStorage`（两端共用同一 key）。原先新笔记 `position = MAX+1` 必排最后，写完要翻到底。
+- **预览完整显示 + 图文混排**（v1.5.0）：预览不再截断正文、配图全部显示、封面改 3:4 不裁切；正文写 `[[图2]]` 即可把第 2 张配图插到该位置（编辑器有「🖼 插入图位」按钮）。标记是**内部排版语法**，复制文案时会自动剥离，不会带到小红书/闲鱼/公众号。
+- **发货话术页**（`/send`）：填网盘链接 / 提取码，一键复制发货话术，粘贴到闲鱼即可。
 - **云端同步**：素材和图片都存在这台电脑上，通过网桥（cloudflare 隧道）让手机随时访问到同一批素材。
 - **手机端**（`/m`）：固定网址，打开即预览完整笔记卡片，**一键复制**标题+正文+标签，粘贴到小红书 APP 手动发布。
 - **队列管理**：标记「已发布」的笔记自动跳到队列末尾；可一键操作待发布 ↔ 已发布。
@@ -20,7 +23,9 @@
 
 ### 开放 API（其他项目/程序直接写入）
 
-通过 HTTP 接口，其他 Claude 项目或程序可直接把**推广文案**写进来并自动落为「待发布」草稿（小红书📕 / 闲鱼🐟 双平台，靠 `meta.purpose` 区分）。三步走：登录 → POST `/api/notes` → status=pending。完整用法见 **`docs/API使用手册.md`**（含可直接复制的 curl 示例）。
+通过 HTTP 接口，其他 Claude 项目或程序可直接把**推广文案**写进来并自动落为「待发布」草稿（小红书📕 / 闲鱼🐟 / 公众号📣 **三平台**，靠 `meta.purpose` 区分；公众号可填 `meta.digest` 作摘要）。三步走：登录 → POST `/api/notes` → status=pending。完整用法见 **`docs/API使用手册.md`**（含可直接复制的 curl 示例）。
+
+另有一组**免登录只读接口**供「纵横工作台」等前端预览：`GET /api/view/notes`、`GET /api/view/notes/<id>`（带自动化 token），并已开 CORS 供 `file://` / `zongheng.zhuanlu.xyz` / `xhs.zhuanlu.xyz` 调用。
 
 ### 也支持闲鱼（手动发布 + 用途标记）
 
@@ -32,11 +37,13 @@
 
 ```bash
 cd E:/myClaudCodeWorkspace/xhs-note-publish
-python -m pip install -r requirements.txt
-python app.py
+py -3.11 -m pip install -r requirements.txt
+py -3.11 app.py
 ```
 
-或双击 `run.bat`。
+或双击 `run.bat`（**会自动挑选装了 Flask 的解释器**，不必自己记 `py -3.11`）。
+
+> ⚠️ **别用 PATH 里的裸 `python`** —— 本机 PATH 里的 `python` 是 3.13.x，**没装 Flask**，直接跑会 `ModuleNotFoundError: No module named 'flask'` 并闪退。用 `py -3.11` 或 `run.bat`。
 
 - 电脑端管理：`http://127.0.0.1:8800/app`
 - 手机端发布：`http://127.0.0.1:8800/m`
@@ -99,19 +106,30 @@ Flask + SQLite + 原生 JS，无外部 CDN 依赖，内网 / 隧道均可离线�
 
 ```
 xhs-note-publish/
-├── app.py            # Flask 后端（路由/API/数据库/二维码）
+├── app.py            # Flask 后端（路由/API/数据库/二维码/CORS/只读API）
+├── import_note.py    # 产线 md 稿子导入
+├── xhs_auto.js       # AutoX.js 安卓自动填草稿脚本
 ├── requirements.txt
-├── run.bat           # 一键启动脚本
-├── data/
+├── run.bat           # 一键启动（自动挑 Flask 解释器）
+├── start.bat         # 服务 + cloudflared 隧道
+├── docs/             # 文档套件（SPEC/ARCHITECTURE/TEST_PLAN/PITFALLS/PROGRESS/接交接/API使用手册）
+├── scripts/          # 回归测试与运维脚本
+│   ├── test_queue_sort.js   # 队列排序回归（25 项，含双端一致）
+│   ├── test_img_slots.js    # 图位标记回归（24 项，含双端一致）
+│   └── attach_images_20260912.py
+├── data/             # 运行时数据（.gitignore，不进库）
 │   ├── notes.db      # SQLite 数据库（自动创建）
-│   └── uploads/      # 上传的图片
+│   ├── uploads/      # 上传的图片
+│   └── backups/      # 库快照
 ├── templates/
 │   ├── login.html    # 登录页
 │   ├── desktop.html  # 电脑端管理
-│   └── mobile.html   # 手机端发布
+│   ├── mobile.html   # 手机端发布
+│   └── send.html     # 发货话术页
 └── static/
     ├── style.css
     ├── app.js        # 桌面端逻辑
     ├── mobile.js     # 手机端逻辑
+    ├── send.js       # 发货话术页逻辑
     └── placeholder.png
 ```

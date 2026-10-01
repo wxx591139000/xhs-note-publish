@@ -1,10 +1,15 @@
 # 小红书笔记发布工具 · 项目测试计划
 
-> 版本：v1.3.0（2026-08-21 归档）
+> 版本：v1.6.0（2026-10-01 归档）
 
 ## 测试范围与策略
 
-本项目为 Flask 本地 Web 应用，采用**手工 API/功能冒烟测试**（curl + 浏览器），无自动化测试框架。测试覆盖核心链路。
+本项目为 Flask 本地 Web 应用。测试分两层：
+
+1. **自动化回归（Node，无服务/无网络）** —— `scripts/` 下的两个脚本，直接**从 `static/*.js` 抽取线上函数体**执行断言（不是重写副本），防止「测试与实现各写一份」漂移：
+   - `node scripts/test_queue_sort.js` —— 队列排序，**25 项**（含 **48 组**双端一致性 = 3 排序 × 4 状态 × 4 平台）
+   - `node scripts/test_img_slots.js` —— 图位标记，**24 项**（含 **14 组**双端一致性 + `【价格】`/`[01:10]` 负例）
+2. **手工冒烟 + 浏览器 E2E**（curl / Playwright + 系统 Chrome），覆盖认证、CRUD、上传、隧道、预览渲染等链路。
 
 ## 已覆盖的测试（2026-08-14 验证通过）
 
@@ -72,6 +77,26 @@
 - [x] 无 `![[images]]` 引用时按标题前缀匹配 images 目录
 - [x] 孤儿图片清理
 
+### 队列排序（v1.4.0，桌面 + 手机）
+- `node scripts/test_queue_sort.js` → **25 passed / 0 failed**；其中 **48 组双端一致性**断言（3 排序 × 4 状态 × 4 平台）确保 `app.js` 与 `mobile.js` 输出完全相同 ✅
+- 真实 49 条数据跑线上排序函数：默认「最新在前」首位 = 当天新建那条 ✅
+- 浏览器 E2E（Playwright + 系统 Chrome）：桌面 **8/8**、手机视口 **12/12**；登录态、三档切换、刷新后 localStorage 记忆均验 ✅
+- 反证「排序不影响后端」：`/api/notes` 与 `/api/auto/notes` 顺序与改动前一致 ✅
+
+### 预览完整显示 + 图文混排（v1.5.0）
+- `node scripts/test_img_slots.js` → **24 passed / 0 failed**；含 14 组双端一致性 + 负例（`【价格】`/`[01:10]` 不被误当图位）✅
+- 桌面 E2E **16/16**：含「预览容器内容高度 == 实际高度」证明**没截断**；封面实测 3:4；配图插在正文指定位置 ✅
+- 手机端 E2E **6/6**：复制文案 / 卡片显示 / 字数统计**都已剥离** `[[图N]]` ✅
+- 全库核验：49 条笔记 `body` 里 `![[`、`![]()`、`[图N]` **均 0 命中** —— 证实「老笔记无图位数据」，预览走末尾兜底分支（**这是预期，不是 bug**）
+
+### 发货话术页 / 跨域 / 只读 API（v1.6.0）
+- `/send`：带登录 cookie → **200**，页面含「网盘/提取码」话术字段 ✅
+- CORS：`Origin: https://zongheng.zhuanlu.xyz` → 回 `Access-Control-Allow-Origin/Credentials/Methods/Headers`；`Origin: https://evil.example.com` → **无** CORS 头（非白名单不放行）✅
+- 只读 API：`GET /api/view/notes` 无 token → **403**；带正确 token → **200**；`GET /api/view/notes/<真实id>?token=` → **200** 且返回 note JSON；`<不存在id>` → **404** ✅
+- 只读语义：调用前后 `/api/notes` 均为 **49 条**（view 接口不写库）✅
+- `run.bat` / `start.bat` 解释器挑选逻辑：**静态核对**（先 `py -3.11`，再 `Python311\python.exe`，都无则打印指引 + `exit /b 1`）✅ —— ⚠️ 未在「无 Flask 环境」实机复现
+- 语法：`node --check` app.js/mobile.js/send.js + `py_compile` app.py/import_note.py 全过 ✅
+
 ## 已知测试缺口
 
 - **AutoX.js 真机**：无法在开发环境跑（需安卓+小红书实机），选择器未实机验证，需用户 DRY_RUN + 真机微调
@@ -81,4 +106,12 @@
 
 ## 建议回归
 
-每次改动 `app.py` 后，至少跑一遍：登录 → 建笔记带图 → 发布 → 自动化拉取 → 公网访问。
+**每次改动 `static/*.js`（桌面/手机）** → 必跑（秒级，无需服务）：
+```bash
+node scripts/test_queue_sort.js     # 排序 + 双端一致
+node scripts/test_img_slots.js      # 图位标记 + 双端一致
+```
+
+**每次改动 `app.py`** → 至少跑一遍手工链路：登录 → 建笔记带图 → 发布 → 自动化拉取 → 公网访问。
+
+**每次改动 `templates/*.html`** → 记得**重启服务**再验（Flask 模板内存缓存），否则会误判「没生效」。

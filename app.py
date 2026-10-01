@@ -39,6 +39,24 @@ app.secret_key = os.environ.get("XHS_SECRET", "xhs-note-publish-" + uuid.uuid4()
 # 限制上传体积
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
 
+# ---------------------------------------------------------------------------
+# 跨域（供纵横工作台等前端读取；file:// 的 Origin 为字符串 "null"）
+# ---------------------------------------------------------------------------
+ALLOWED_ORIGINS = {"null", "https://zongheng.zhuanlu.xyz", "https://xhs.zhuanlu.xyz"}
+
+@app.after_request
+def add_cors_headers(resp):
+    origin = request.headers.get("Origin", "")
+    if origin in ALLOWED_ORIGINS or origin.startswith("http://localhost") or origin.startswith("http://127.0.0.1"):
+        resp.headers["Access-Control-Allow-Origin"] = origin
+        resp.headers["Access-Control-Allow-Credentials"] = "true"
+        resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Requested-With"
+    if request.method == "OPTIONS":
+        resp.status_code = 204
+    return resp
+
+
 
 # ---------------------------------------------------------------------------
 # 数据库
@@ -184,6 +202,13 @@ def mobile_login():
     if not session.get("ok"):
         return render_template("login.html", error=None, next="/m")
     return render_template("mobile.html")
+
+
+@app.route("/send")
+@require_auth
+def send_phrases():
+    """发货话术快捷页：填网盘链接/提取码，一键复制话术粘贴到闲鱼。"""
+    return render_template("send.html")
 
 
 # ---------------------------------------------------------------------------
@@ -423,6 +448,35 @@ def favicon():
 def serve_auto_script():
     """把 AutoX.js 脚本以纯文本返回，方便手机直接下载到本地。"""
     return send_from_directory(BASE_DIR, "xhs_auto.js", mimetype="text/plain")
+
+
+
+
+# ---------------------------------------------------------------------------
+# 纵横工作台集成：token 免登录只读接口（供工作台「发布工具」视图预览）
+# ---------------------------------------------------------------------------
+@app.route("/api/view/notes")
+def view_notes_all():
+    ensure_auto_token()
+    if not _check_token():
+        return jsonify({"error": "forbidden"}), 403
+    conn = get_db()
+    rows = conn.execute("SELECT * FROM notes ORDER BY CASE status WHEN 'pending' THEN 0 WHEN 'drafted' THEN 1 ELSE 2 END, position, id").fetchall()
+    conn.close()
+    return jsonify({"notes": [note_to_dict(r) for r in rows]})
+
+
+@app.route("/api/view/notes/<int:nid>")
+def view_note_one(nid):
+    ensure_auto_token()
+    if not _check_token():
+        return jsonify({"error": "forbidden"}), 403
+    conn = get_db()
+    row = conn.execute("SELECT * FROM notes WHERE id=?", (nid,)).fetchone()
+    conn.close()
+    if not row:
+        return jsonify({"error": "not found"}), 404
+    return jsonify({"note": note_to_dict(row)})
 
 
 if __name__ == "__main__":

@@ -1,0 +1,25 @@
+# 行尾权威固定在仓库侧 —— 不依赖每台机器的 git 配置
+#
+# 背景：本机 core.autocrlf=true，历史提交里 .bat 曾以 LF 入库。
+# 若不显式声明，换一台 autocrlf=false 的机器 clone 会把 .bat 变成 LF，
+# 而 Windows 批处理对行尾/编码敏感（见 docs/PITFALLS.md）。
+#
+# 注意：*不要*写 `* text=auto eol=lf` —— 那会把 .bat 也变成 LF。
+
+* text=auto
+
+# Windows 批处理：必须 CRLF（文件本身为 UTF-8 无 BOM + chcp 65001）
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 需要在 Linux 执行的脚本：强制 LF（本项目当前没有，留作约定）
+*.sh  text eol=lf
+
+# 二进制：不做任何行尾转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.db  binary
+*.pyc binary

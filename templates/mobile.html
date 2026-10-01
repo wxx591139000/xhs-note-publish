@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>小红书笔记发布</title>
-<link rel="stylesheet" href="/static/style.css?v=20260821-2">
+<link rel="stylesheet" href="/static/style.css?v=20260930-3">
 </head>
 <body class="mobile-body">
 <header class="m-topbar">
@@ -18,12 +18,18 @@
     <button class="chip active" data-plat="all">全部</button>
     <button class="chip" data-plat="xhs">📕 小红书</button>
     <button class="chip" data-plat="idlefish">🐟 闲鱼</button>
+    <button class="chip" data-plat="gzh">📣 公众号</button>
     <button class="chip" data-plat="common">🔀 通用</button>
+  </div>
+  <div class="m-filters m-filters-sort" id="mSortRow">
+    <button class="chip" data-sort="newest">🕒 最新在前</button>
+    <button class="chip" data-sort="oldest">🕓 最早在前</button>
+    <button class="chip" data-sort="queue">📋 队列顺序</button>
   </div>
 </header>
 
 <div id="mList" class="m-list"></div>
-<div class="m-hint" id="mHint">💡 标题「复制标题」→ 正文「复制文案」→ 图「下载图」存相册 → 小红书粘贴、选图发布。</div>
+<div class="m-hint" id="mHint">💡 标题「复制标题」→ 正文「复制文案」→ 图「下载图」存相册 → 小红书粘贴、选图发布。 <a href="/send" style="color:#ff5555;font-weight:700;">📦发货话术</a></div>
 <div class="m-empty" id="mEmpty" style="display:none">暂无笔记，去电脑端添加素材吧 🎈</div>
 
 <!-- 图片放大层 -->
@@ -41,6 +47,6 @@
   </div>
 </div>
 
-<script src="/static/mobile.js?v=20260821-2"></script>
+<script src="/static/mobile.js?v=20260930-3"></script>
 </body>
 </html>

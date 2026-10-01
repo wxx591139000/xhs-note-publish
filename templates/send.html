@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>发货话术</title>
+<link rel="stylesheet" href="/static/style.css?v=20260821-2">
+<style>
+  .s-wrap { padding: 10px 12px 30px; }
+  .s-note { font-weight: 700; margin: 4px 0 10px; }
+  .s-title { font-weight: 700; margin: 12px 0 8px; }
+  .s-config, .s-card, .s-pick-item { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .s-config label { display: block; font-size: 13px; color: #666; margin-bottom: 8px; }
+  .s-config input, .s-config textarea { width: 100%; box-sizing: border-box; margin-top: 3px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; }
+  .s-link-row { display: grid; grid-template-columns: 78px 1fr 92px 34px; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .s-link-row select, .s-link-row input { width: 100%; box-sizing: border-box; padding: 7px 6px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; }
+  .s-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .s-card-name { font-weight: 700; font-size: 15px; }
+  .s-card-text { white-space: pre-wrap; word-break: break-all; font-size: 13px; line-height: 1.65; color: #333; background: #f7f8fa; border-radius: 8px; padding: 10px; margin: 0; font-family: inherit; }
+  .s-pick-item { display: block; text-decoration: none; color: inherit; }
+  .s-pick-title { font-weight: 700; font-size: 15px; }
+  .s-pick-tag { font-size: 12px; color: #ff5555; }
+  .s-pick-sub { font-size: 12px; color: #999; margin-top: 3px; }
+  .m-topbar .m-back { color: #fff; font-size: 13px; text-decoration: none; }
+</style>
+</head>
+<body class="mobile-body">
+<header class="m-topbar">
+  <div class="m-brand">📦 发货话术</div>
+  <a class="m-back" href="/m">← 发布队列</a>
+</header>
+
+<div class="s-wrap">
+  <div class="s-note" id="sNoteBar"></div>
+
+  <div id="sPicker" style="display:none">
+    <div class="s-title">选择一篇笔记设置发货链接</div>
+    <div id="sPickerList"></div>
+  </div>
+
+  <div id="sEditor" style="display:none">
+    <div class="s-config">
+      <div class="s-title">发货信息（保存到这篇笔记）</div>
+      <label>文件 / 宝贝名
+        <input id="sFile" type="text" placeholder="例如 X推文视频下载器-v1.0.5">
+      </label>
+      <label>使用说明 / 备注（可选，会出现在话术里）
+        <textarea id="sNote" rows="3" placeholder="粘贴安装/使用说明"></textarea>
+      </label>
+      <div class="s-title">网盘链接（可多个）</div>
+      <div id="sLinks"></div>
+      <button class="btn btn-ghost" id="sAddLink" style="width:100%">＋ 添加网盘链接</button>
+      <button class="btn btn-primary" id="sSave" style="width:100%;margin-top:8px">💾 保存到笔记</button>
+    </div>
+    <div class="s-title">发货话术（复制后到闲鱼粘贴）</div>
+    <div id="sList"></div>
+  </div>
+
+  <div class="m-hint" id="sHint">选一篇笔记 → 填网盘链接 → 保存 → 复制话术到闲鱼粘贴。</div>
+</div>
+
+<script src="/static/send.js?v=20260906-3"></script>
+</body>
+</html>
